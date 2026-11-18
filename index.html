@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="mk">
+<head>
+  <meta charset="utf-8">
+  <title>Куќа на Робевци · AR проба</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <!-- Верзиите се фиксирани (никогаш „latest“) -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    html,body{margin:0;height:100%;background:#111;font-family:"Segoe UI",system-ui,Arial,sans-serif}
+    #hud{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+         background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;text-align:center;pointer-events:none}
+    #hud b{display:block;font-size:17px;margin-bottom:4px}
+    #hud span{display:block;font-size:13px;opacity:.85;line-height:1.45}
+    #state{position:fixed;top:12px;left:12px;z-index:10;padding:6px 10px;border-radius:14px;font-size:13px;font-weight:600;
+           background:#b1222b;color:#fff;transition:background .2s}
+    #state.ok{background:#1f8a3b}
+    .mindar-ui-overlay{z-index:5}
+  </style>
+</head>
+<body>
+  <div id="state">не е најдено · not found · nicht gefunden</div>
+  <div id="hud">
+    <b>Насочи ја камерата кон сликата</b>
+    <span>Point your camera at the image · Richten Sie die Kamera auf das Bild</span>
+  </div>
+
+  <!-- Маркерот: ширина 1 единица = 148 mm. Сè се мери од центарот на маркерот. -->
+  <a-scene mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; uiScanning: no; uiLoading: yes"
+           color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true"
+           vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0" id="m0">
+      <!-- рамка околу маркерот (1 × 1 единица = 148 × 148 mm) -->
+      <a-plane position="0 0 0.001" width="1" height="1" material="color: #ffb000; opacity: 0.18; transparent: true"></a-plane>
+      <a-entity geometry="primitive: plane; width: 1.04; height: 1.04" position="0 0 0.002"
+                material="color: #ffb000; wireframe: true; wireframeLinewidth: 3; opacity: .9; transparent: true"></a-entity>
+      <!-- коцка 0,3 единици (≈44 mm) над маркерот, со бавно вртење -->
+      <a-box position="0 0 0.35" width="0.3" height="0.3" depth="0.3" color="#1f8a3b"
+             animation="property: rotation; to: 0 360 0; dur: 6000; easing: linear; loop: true"></a-box>
+      <!-- оски: X црвено (десно), Y зелено (горе), Z сино (од маркерот) -->
+      <a-cylinder position="0.25 0 0.01" rotation="0 0 90" radius="0.01" height="0.5" color="#e53935"></a-cylinder>
+      <a-cylinder position="0 0.25 0.01" radius="0.01" height="0.5" color="#43a047"></a-cylinder>
+      <a-cylinder position="0 0 0.26" rotation="90 0 0" radius="0.01" height="0.5" color="#1e88e5"></a-cylinder>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    var st = document.getElementById("state");
+    var t = document.getElementById("m0");
+    t.addEventListener("targetFound", function(){ st.textContent = "најдено · found · gefunden"; st.className = "ok"; });
+    t.addEventListener("targetLost",  function(){ st.textContent = "не е најдено · not found · nicht gefunden"; st.className = ""; });
+  </script>
+</body>
+</html>
