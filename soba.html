@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="mk">
+<head>
+  <meta charset="utf-8">
+  <title>Куќа на Робевци · Соба 1 · AR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    html,body{margin:0;position:fixed;inset:0;width:100%;height:100%;overflow:hidden;background:#111;font-family:"Segoe UI",system-ui,Arial,sans-serif}
+    #state{position:fixed;top:12px;left:12px;z-index:10;padding:6px 10px;border-radius:14px;font-size:13px;font-weight:600;background:#b1222b;color:#fff}
+    #state.ok{background:#1f8a3b}
+    #lang{position:fixed;top:12px;right:12px;z-index:10;display:flex;gap:6px}
+    #lang button{font:600 13px "Segoe UI",Arial;padding:6px 10px;border-radius:14px;border:0;background:rgba(255,255,255,.85);color:#222}
+    #lang button.on{background:#ffb000}
+    #hud{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.8));color:#fff;text-align:center}
+    #hud b{display:block;font-size:17px;margin-bottom:4px}
+    #hud span{display:block;font-size:13px;opacity:.9;line-height:1.45}
+    .a-enter-vr,.a-enter-vr-button{display:none!important}
+  </style>
+</head>
+<body>
+  <div id="state">не е најдено · not found</div>
+  <div id="lang"><button data-l="mk" class="on">МК</button><button data-l="en">EN</button><button data-l="de">DE</button></div>
+  <div id="hud"><b id="h1"></b><span id="h2"></span></div>
+
+  <a-scene mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; uiScanning: no; uiLoading: yes"
+           color-space="sRGB" renderer="colorManagement: true"
+           vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-camera position="0 0 0" look-controls="enabled: false" cursor="rayOrigin: mouse" raycaster="objects: .hot; far: 200"></a-camera>
+    <a-entity mindar-image-target="targetIndex: 0" id="m0"></a-entity>
+  </a-scene>
+
+<script>
+/* Позициите се од Blender моделот, во рамката на M0, поделени со 0,148 m (ширина на маркерот = 1 единица). */
+var ITEMS = [{"id": "hearth", "n": 1, "pos": [-21.301, 2.643, -13.079], "title": {"mk": "Огниште", "en": "Hearth", "de": "Feuerstelle"}, "color": "#ff7a00", "m": [-3.152, 0.391, -1.936]}, {"id": "niche", "n": 2, "pos": [-20.205, -4.028, 5.184], "title": {"mk": "Осликана ниша", "en": "Painted niche", "de": "Bemalte Nische"}, "color": "#2b6fd6", "m": [-2.99, -0.596, 0.767]}, {"id": "chest1", "n": 3, "pos": [-18.534, -6.338, 1.23], "title": {"mk": "Сандак", "en": "Chest", "de": "Truhe"}, "color": "#8b5a2b", "m": [-2.743, -0.938, 0.182]}, {"id": "chest2", "n": 4, "pos": [-27.734, -1.004, -7.306], "title": {"mk": "Сандак до печката", "en": "Chest by the stove", "de": "Truhe am Ofen"}, "color": "#8b5a2b", "m": [-4.105, -0.149, -1.081]}, {"id": "tray", "n": 5, "pos": [-11.855, -2.836, -8.199], "title": {"mk": "Бакарна тава", "en": "Copper tray", "de": "Kupfertablett"}, "color": "#c06a2b", "m": [-1.755, -0.42, -1.213]}];
+var TXT = {
+  mk:{h1:"Насочи ја камерата кон сликата на влезот",h2:"Допри ја точката за да видиш што е тоа.",more:"Опис: следува (проверка од кустос)"},
+  en:{h1:"Point your camera at the image at the entrance",h2:"Tap a dot to see what it is.",more:"Description: coming soon (curator review)"},
+  de:{h1:"Richten Sie die Kamera auf das Bild am Eingang",h2:"Tippen Sie auf einen Punkt.",more:"Beschreibung folgt (Prüfung durch Kustos)"}
+};
+var lang = "mk", sel = null;
+var m0 = document.getElementById("m0");
+ITEMS.forEach(function(it){
+  var g = document.createElement("a-entity"); g.setAttribute("position", it.pos.join(" "));
+  var s = document.createElement("a-sphere"); s.setAttribute("radius","0.9"); s.setAttribute("color",it.color); s.setAttribute("class","hot"); s.setAttribute("data-id",it.id);
+  s.setAttribute("material","opacity:.9; transparent:true"); g.appendChild(s);
+  // број 1..5 (латински цифри, па работи без посебен фонт)
+  var t = document.createElement("a-text"); t.setAttribute("value", String(it.n)); t.setAttribute("align","center"); t.setAttribute("color","#fff"); t.setAttribute("width","8"); t.setAttribute("position","0 0 1"); t.setAttribute("look-at","[camera]"); g.appendChild(t);
+  if (it.id === "hearth") { // привремен „оган“: три конуси што трепкаат
+    [[0,0.0],[ -0.6,0.2],[0.6,0.2]].forEach(function(o,i){
+      var f = document.createElement("a-cone"); f.setAttribute("position", o[0]+" "+(1.4+o[1])+" 0"); f.setAttribute("radius-bottom","0.6"); f.setAttribute("radius-top","0"); f.setAttribute("height","1.6"); f.setAttribute("color", i? "#ffb000":"#ff5a00");
+      f.setAttribute("animation","property: scale; from: 1 0.7 1; to: 1 1.25 1; dir: alternate; dur:"+(380+i*140)+"; loop: true; easing: easeInOutSine"); g.appendChild(f);
+    });
+  }
+  m0.appendChild(g);
+});
+function setLang(l){ lang=l; document.querySelectorAll("#lang button").forEach(function(b){b.className=(b.dataset.l===l)?"on":"";}); show(sel); }
+function show(it){
+  var T=TXT[lang];
+  if(!it){ document.getElementById("h1").textContent=T.h1; document.getElementById("h2").textContent=T.h2; return; }
+  document.getElementById("h1").textContent = it.n+". "+it.title[lang];
+  document.getElementById("h2").textContent = T.more;
+}
+document.querySelectorAll("#lang button").forEach(function(b){ b.addEventListener("click", function(){ setLang(b.dataset.l); }); });
+document.querySelector("a-scene").addEventListener("click", function(e){
+  var el = e.target && e.target.getAttribute && e.target.getAttribute("data-id") ? e.target : (e.detail && e.detail.intersectedEl);
+  if(el){ var id=el.getAttribute("data-id"); sel = ITEMS.filter(function(x){return x.id===id;})[0]||null; show(sel); }
+});
+document.querySelector("a-scene").addEventListener("loaded", function(){
+  document.querySelector("a-camera").addEventListener("raycaster-intersection", function(){});
+});
+function nudge(){ window.dispatchEvent(new Event("resize")); }
+if (window.visualViewport) window.visualViewport.addEventListener("resize", nudge);
+window.addEventListener("orientationchange", function(){ setTimeout(nudge,300); });
+var st=document.getElementById("state");
+m0.addEventListener("targetFound", function(){ st.textContent="најдено · found"; st.className="ok"; });
+m0.addEventListener("targetLost",  function(){ st.textContent="не е најдено · not found"; st.className=""; });
+show(null);
+</script>
+</body>
+</html>
