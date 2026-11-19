@@ -8,7 +8,8 @@
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    html,body{margin:0;height:100%;background:#111;font-family:"Segoe UI",system-ui,Arial,sans-serif}
+    /* Целиот прозорец е фиксиран: видеото и платното имаат иста големина, без поместување кога лентата на Chrome се крие */
+    html,body{margin:0;position:fixed;inset:0;width:100%;height:100%;overflow:hidden;background:#111;font-family:"Segoe UI",system-ui,Arial,sans-serif}
     #hud{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
          background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;text-align:center;pointer-events:none}
     #hud b{display:block;font-size:17px;margin-bottom:4px}
@@ -49,6 +50,25 @@
   </a-scene>
 
   <script>
+    // Кога се менува видливата површина (лента на прелистувачот, ротација), јави му на MindAR да ги прерачуна видеото и платното
+    function nudge(){ window.dispatchEvent(new Event("resize")); }
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", nudge);
+    window.addEventListener("orientationchange", function(){ setTimeout(nudge, 300); });
+
+    // ?debug=1 : врз маркерот се црта неговата слика полупровидно + 4 точки на аглите, за проверка на поклопување
+    if (/[?&]debug=1/.test(location.search)) {
+      var m0 = document.getElementById("m0");
+      var img = document.createElement("a-plane");
+      img.setAttribute("position", "0 0 0.003"); img.setAttribute("width", "1"); img.setAttribute("height", "1");
+      img.setAttribute("material", "src: ./marker_debug.jpg; opacity: 0.55; transparent: true; shader: flat");
+      m0.appendChild(img);
+      [[-0.5,0.5],[0.5,0.5],[0.5,-0.5],[-0.5,-0.5]].forEach(function(p){
+        var s = document.createElement("a-sphere");
+        s.setAttribute("position", p[0] + " " + p[1] + " 0.01"); s.setAttribute("radius", "0.025"); s.setAttribute("color", "#ff2d2d");
+        m0.appendChild(s);
+      });
+    }
+
     var st = document.getElementById("state");
     var t = document.getElementById("m0");
     t.addEventListener("targetFound", function(){ st.textContent = "најдено · found · gefunden"; st.className = "ok"; });
